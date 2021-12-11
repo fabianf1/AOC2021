@@ -1,71 +1,48 @@
-from collections import defaultdict
+def load_data(path: str) -> dict:
+    # Dictionary sort of works like a 2D array
+    return  {(x, y): int(e) for x, l in enumerate(open(path))
+                            for y, e in enumerate(l.strip())}
 
-def load_data(path: str) -> list:
-    return [[int(number) for number in list(line)] for line in open(path).read().strip().splitlines()]
+def neighbours(i: int, j: int, d: dict) -> filter:
+    # If none or 0: Position is not used
+    return filter(d.get, [(i + 1, j + 1), (i + 1, j), (i + 1, j - 1), (i, j + 1),
+                          (i - 1, j - 1), (i - 1, j), (i - 1, j + 1), (i, j - 1)])
 
-def neighbours(i,j, sz_i, sz_j, stack) -> set:
-    if i - 1 > -1   and j - 1 > -1  : stack[i-1, j-1] += 1
-    if i - 1 > -1                   : stack[i-1, j] += 1
-    if i - 1 > -1   and j + 1 < sz_j: stack[i-1, j+1] += 1
-    if                  j - 1 > -1  : stack[i, j-1] += 1
-    if                  j + 1 < sz_j: stack[i, j+1] += 1
-    if i + 1 < sz_i and j - 1 > -1  : stack[i+1, j-1] += 1
-    if i + 1 < sz_i                 : stack[i+1, j] += 1
-    if i + 1 < sz_i and j + 1 < sz_j: stack[i+1, j+1] += 1
-    return stack
-
-def step_octo(d: list[list]) -> int:
-    stack = defaultdict(int)
+def step_octo(d: dict) -> int:
     count = 0
-    # Loop 1
-    for i in range(len(d)):
-        for j in range(len(d[0])):
-            d[i][j] += 1
-            if d[i][j] > 9:
-                stack = neighbours(i, j, len(d), len(d[0]), stack)
-                d[i][j] = 0
-                count += 1
-    # Loop 2
-    while len(stack) > 0:
-        idx, num = stack.popitem()
-        i, j = idx
-        if d[i][j] != 0:
-            d[i][j] += num
-            if d[i][j] > 9:
-                stack = stack | neighbours(i, j, len(d), len(d[0]), stack)
-                d[i][j] = 0
-                count += 1
+    # Increment
+    for i in d: d[i] += 1
+    flashing = {i for i in d if d[i] > 9}
+    # Process flashing
+    while flashing:
+        f = flashing.pop()
+        d[f] = 0
+        count += 1
+        for n in neighbours(*f, d): # * unpacks a list, so it makes f into i, j
+            d[n] += 1
+            if d[n] > 9: flashing.add(n)
     return count
 
-def flash_sim(d: list[list], days: int) -> int:
+def flash_sim(d: dict, days: int) -> int:
     count = 0
-
     for n in range(days):
         count+= step_octo(d)
-    # Return
     return count
 
-def find_sync_day(d: list[list]) -> int:
-    count = 0
-    day = 0
-    while count != 100:
-        count = step_octo(d)
-        day += 1
-    return day
+def find_sync_day(d: dict) -> int:
+    for day in range(1,1000):
+        if step_octo(d) == 100: return day
 
 def main() -> None:
     # Load data
     test = load_data('test.txt')
     data = load_data('data.txt')
     # Part 1
-    assert flash_sim(test, 100) == 1656
-    print('Part 1: ' + str(flash_sim(data, 100)))
-    # Reload data as list is modified in run above
-    test = load_data('test.txt')
-    data = load_data('data.txt')
+    assert flash_sim(test.copy(), 100) == 1656
+    print('Part 1: ' + str(flash_sim(data.copy(), 100)))
     # Part 2
-    assert find_sync_day(test) == 195
-    print('Part 2: ' + str(find_sync_day(data)))
+    assert find_sync_day(test.copy()) == 195
+    print('Part 2: ' + str(find_sync_day(data.copy())))
 
 if __name__ == "__main__":
     main()
