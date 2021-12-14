@@ -1,41 +1,23 @@
 def load_data(path: str):
-    data = open(path).read().strip().split('\n\n')
+    tpl, _, *rules = open(path).read().strip().split('\n')
+    rules = dict(r.split(" -> ") for r in rules)
+    return [tpl, rules]
 
-    pair = []
-    addition = []
-    for d in data[1].splitlines():
-        d = d.split(' -> ')
-        pair.append(d[0])
-        addition.append(d[1])
-
-    return [data[0], [pair, addition]]
-
-def get_common_diff(t: str, rules: list, steps: int) -> int:
+def get_common_diff(tpl: str, rules: dict, steps: int) -> int:
     pairs = {}
     chars = {}
-    for j in range(len(t)):
-        chars[t[j]] = chars.get(t[j], 0) + 1
-        if j+1 < len(t):
-            pair = t[j:j+2]
-            pairs[pair] = pairs.get(pair, 0) + 1
-    #
+    for j in range(len(tpl)):
+        chars[tpl[j]] = chars.get(tpl[j], 0) + 1
+        if j+1 < len(tpl):
+            pairs[tpl[j:j + 2]] = pairs.get(tpl[j:j + 2], 0) + 1
     for i in range(steps):
-        pairs_o = pairs.copy()
-        for key in pairs_o:
-            num = pairs_o[key]
-            add = rules[1][rules[0].index(key)]
-
-            pairs[key] -= num
-
-            pair1 = key[0] + add
-            pair2 = add + key[1]
-            pairs[pair1] = pairs.get(pair1, 0) + num
-            pairs[pair2] = pairs.get(pair2, 0) + num
-
-            chars[add] = chars.get(add, 0) + num
-    #
-    val = [chars[key] for key in chars]
-    return max(val) - min(val)
+        for (a,b), c in pairs.copy().items():
+            x = rules[a+b]
+            pairs[a+b] -= c
+            pairs[a+x] = pairs.get(a+x, 0) + c
+            pairs[x+b] = pairs.get(x+b, 0) + c
+            chars[x] = chars.get(x, 0) + c
+    return max(chars.values()) - min(chars.values())
 
 def main() -> None:
     # Load data
