@@ -19,12 +19,12 @@ def load(path: str) -> Tuple[str, dict]:
 
 def enhance_image(e: str, d: dict, num: int) -> dict:
     d = d.copy()
-    r = [0,int(pow(len(d),0.5))]
+    r = [0,int(pow(len(d),0.5))] # Correct, assuming that the input is square...
     inf_val = '0'
 
     for n in range(num):
-        r[0] -= 2
-        r[1] += 2
+        r[0] -= 1
+        r[1] += 1
 
         old = d.copy()
         for i in range(r[0], r[1]):
@@ -36,7 +36,10 @@ def enhance_image(e: str, d: dict, num: int) -> dict:
                         v += old.get((x, y), inf_val)
                 v = int(v,2)
                 d[(i,j)] = e[v]
-        inf_val = d[(r[0],r[0])]
+        if inf_val == '0':
+            inf_val = e[0]
+        else:
+            inf_val = e[511]
     return d
 
 def count_bright(d: dict):
